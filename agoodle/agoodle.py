@@ -40,6 +40,7 @@ class RasterInfo(object):
 class AGoodle(object):
 
     def __init__(self, filename):
+        assert op.exists(filename), "%s does not exist" % filename
         self.filename = filename
         self.raster   = gdal.Open(filename)
         self.ri = self.raster_info = RasterInfo(self.raster)
@@ -182,12 +183,12 @@ class goodlearray(np.ndarray):
 
         assert ix < self.shape[1], (ix, self.shape[1])
         assert iy < self.shape[0], (iy, self.shape[0])
-  
+
         #print ix, iy
         return ix, iy
-    
+
     def rw(self, rx, ry):
-        """take real world coordinate and read the value at 
+        """take real world coordinate and read the value at
         that coord"""
         ix, iy = self.rw2index(rx, ry)
         return self[iy, ix]
@@ -287,57 +288,3 @@ def points_from_wkt(wkt, from_epsg, to_epsg):
     pts = np.array(pts)
     bbox = (pts[:, 0].min(), pts[:, 1].min(), pts[:, 0].max(), pts[:, 1].max())
     return pts, bbox
-
-
-
-if __name__ == "__main__":
-
-    #g = AGoodle('../foodmiles/landcover4_3k_022007.img')
-    #g = AGoodle('tests/data/raster.tif')
-    path = op.dirname(__file__)
-    g = AGoodle(op.join(path, 'tests/data/z.tif'))
-    e = g.ri
-    rx = e.right - e.left
-    ry = e.top - e.bottom
-    print ry
-
-    # take a subset.
-    bbox = (e.left + rx/2.1, e.bottom + ry/2.1,
-            e.right - rx/2.1, e.top - ry/2.1)
-
-    a = g.read_array_bbox(bbox)
-    assert hasattr(a, 'agoodle')
-
-    a.to_raster('z.tif')
-
-    bbox = a.extent
-
-    ix, iy = a.rw2index(bbox[0], bbox[1])
-    assert ix == 0 
-    #assert iy == a.shape[0] - 1, (iy, a.shape[0])
-    ix, iy = a.rw2index(bbox[2], bbox[3])
-    #assert iy == 0 
-    assert ix == a.shape[1] - 1, (ix, a.shape[1])
-
-    print a.rw(bbox[0], bbox[1])
-    print a.rw(bbox[2], bbox[3])
-
-    xcoords = np.linspace(bbox[0], bbox[2], 5)
-    ycoords = list(np.linspace(bbox[1], bbox[3], 5))
-    ycoords = ycoords[2:] + ycoords[:2]
-    verts = zip(xcoords, ycoords)
-    verts.append(verts[0])
-    verts = np.array(verts)
-    import pylab
-    pylab.subplot(311)
-    pylab.imshow(a, extent=(bbox[0], bbox[2], bbox[1], bbox[3]))
-    pylab.subplot(312)
-    pylab.plot(verts[:, 0], verts[:, 1])
-
-    b = a.mask_with_poly(verts, copy=True, mask_value=0)
-    pylab.subplot(313)
-    pylab.imshow(b, extent=(bbox[0], bbox[2], bbox[1], bbox[3]))
-    pylab.show()
-    assert a.sum() > b.sum()
-    import os
-    os.unlink('z.tif')

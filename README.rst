@@ -84,6 +84,11 @@ Usage
 =====
 
 See `Summary`_ and `landsummary`_ demo where you can query a raster dataset by drawing a polygon on an openlayers map.
+Generally, you'll grab an array, mask it to a polygon, then query it. The following is generated from the `example script`_ included in the agoodle repo. (colors are different between top, bottom because matplotlib is automatically choosing the colors.) In the bottom figure, blue values are masked.
+
+.. image:: http://lh6.ggpht.com/_uU_kLC5AdTc/S-b-AQ0O1QI/AAAAAAAAA0g/ehfQE4Xp_Kc/s800/z.png
+
+
 
 
 Development
@@ -96,3 +101,4 @@ please fork, patch, document, contribute.
 .. _`numpy`: http://numpy.scipy.org
 .. _`matplotlib`: http://matplotlib.sourceforge.net
 .. _`landsummary`: http://landsummary.com/map/
+.. _`example script`: http://github.com/brentp/agoodle/tree/master/examples/plot_n_query.py
