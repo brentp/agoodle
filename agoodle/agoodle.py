@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.nxutils as nx
 from osgeo import gdal
-from osgeo import ogr
-from osgeo.gdalconst import GDT_Float64
+from osgeo import ogr, osr
 import os.path as op
 
 
@@ -74,7 +73,7 @@ class AGoodle(object):
         if tmaxx > self.ri.nx: tmaxx = self.ri.nx
         if tmaxy > self.ri.ny: tmaxy = self.ri.ny
         cbbox = [tminx, tminy, tmaxx, tmaxy]
-        assert cbbox[2] > cbbox[0] and cbbox[3] > cbbox[1], ("cbox out of order", cbox)
+        assert cbbox[2] > cbbox[0] and cbbox[3] > cbbox[1], ("cbox out of order", cbbox)
 
         new_bbox = [None, None, None, None]
         new_bbox[0] = gt.left + cbbox[0] * gt.xsize
@@ -95,6 +94,33 @@ class AGoodle(object):
                 idxs[2] - idxs[0], idxs[3] - idxs[1])
 
         return goodlearray(a, self, new_bbox)
+
+    def summarize_wkt(self, wkt, wkt_epsg=None, this_epsg=None):
+        """
+        encapsulate the common task of querying a raster with a wkt polygon
+        returns a dictionary of class : area.
+        where class is the integer value in the raster data store and area is
+        the area in units of the raster.
+        Likely, one will convert the integer classes into their human-readable names before
+        presenting.
+        """
+        this_sr = osr.SpatialReference()
+        wkt_sr = osr.SpatialReference()
+        if this_epsg is None:
+            pr = self.raster.GetProjection()
+            this_sr.ImportFromWkt(pr)
+        else:
+            this_sr.ImportFromEPSG(this_epsg)
+        if wkt_epsg is None:
+            pr = self.raster.GetProjection()
+            wkt_sr.ImportFromWkt(pr)
+        else:
+            wkt_sr.ImportFromEPSG(wkt_epsg)
+
+        pts, bbox = points_from_wkt(wkt, wkt_epsg, this_sr)
+        a = self.read_array_bbox(bbox)
+        a.mask_with_poly(pts, copy=False)
+        return a.do_stats()
 
     def circle_mask(self, cradius, mask):
          xs, ys = np.mgrid[-cradius:cradius + 1
@@ -185,6 +211,19 @@ class goodlearray(np.ndarray):
             return b
         self[(outsiders[:, 1], outsiders[:, 0])] = mask_value
 
+    def do_stats(self, exclude=(0, )):
+        """ do some stats on the integer types in the array.
+        returns the area of cells for each type found in the array.
+        you can use this after masking to only calc inside the polygon.
+        """
+        raster_info = self.agoodle.raster_info
+        classes = np.unique(self)
+        cell_area = abs(raster_info.xsize * raster_info.ysize)
+        stats = {}
+        for cls in (c for c in classes if c not in exclude):
+            stats[cls] = len(self[self == cls]) * cell_area
+        return stats
+
     def to_raster(self, filename, driver='GTiff'):
 
         from osgeo import gdal_array
@@ -220,10 +259,22 @@ class goodlearray(np.ndarray):
 
 
 def points_from_wkt(wkt, from_epsg, to_epsg):
+    """
+    send in the wkt for a polygon and get back the
+    points and the bbox that contains those points.
+    `from_epsg` and `to_epsg` determine how to reproject
+    the points. this can be used if the wkt is in a projection
+    different from the raster to be queried.
+    """
     g = ogr.CreateGeometryFromWkt(wkt)
-
-    ifrom = osr.SpatialReference(); ifrom.ImportFromEPSG(from_epsg)
-    ito = osr.SpatialReference(); ito.ImportFromEPSG(to_epsg)
+    if isinstance(from_epsg, (long, int)):
+        ifrom = osr.SpatialReference(); ifrom.ImportFromEPSG(from_epsg)
+    else:
+        ifrom = from_epsg
+    if isinstance(ifrom, (long, int)):
+        ito = osr.SpatialReference(); ito.ImportFromEPSG(to_epsg)
+    else:
+        ito = to_epsg
     g.AssignSpatialReference(ifrom)
     g.TransformTo(ito)
 

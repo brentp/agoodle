@@ -54,6 +54,43 @@ class TestAGoodle(unittest.TestCase):
         a = self.ag.read_array_bbox()
         assert hasattr(a, 'agoodle')
 
+class TestSummarize(unittest.TestCase):
+
+    def setUp(self):
+        path = os.path.dirname(__file__)
+        self.tifpath = os.path.join(path, 'data', 'z.tif')
+        self.ag = AGoodle(self.tifpath)
+
+    def test_summarize(self):
+        """
+        bbox = self.ag.ri.extent
+        xcoords = np.linspace(bbox[0], bbox[2], 6)
+        ycoords = list(np.linspace(bbox[1], bbox[3], 6))
+        ycoords = ycoords[3:] + ycoords[:3]
+        verts = zip(xcoords, ycoords)
+        verts.append(verts[0])
+        verts = np.array(verts)
+        print >>sys.stderr, verts
+        from shapely.geometry import Polygon
+        wkt = Polygon(verts).wkt
+        print >> sys.stderr, wkt
+        return
+        """
+        wkt = """POLYGON ((-13249847.8545559067279100 4564878.5321548320353031, -13236254.9522339217364788 4581493.7669484084472060, -13222662.0499119367450476 4598109.0017419848591089, -13209069.1475899536162615 4515032.8277741018682718, -13195476.2452679686248302 4531648.0625676782801747, -13181883.3429459836333990 4548263.2973612546920776, -13249847.8545559067279100 4564878.5321548320353031))"""
+        ag = self.ag
+        summary = ag.summarize_wkt(wkt)
+        #print >>sys.stderr, summary
+        possible = np.unique(ag.read_array_bbox()).tolist()
+
+        # the classes returned from the query has to be a subset of the total
+        #classes in the raster
+        self.assert_(set(summary.keys()).issubset(possible))
+
+        ext = ag.ri.extent
+        raster_area = (ext[2] - ext[0]) * (ext[3] - ext[1])
+        self.assert_(sum(summary.values()) < raster_area)
+
+
 class TestGoodlearray(unittest.TestCase):
     def setUp(self):
         path = os.path.dirname(__file__)
