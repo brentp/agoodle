@@ -64,7 +64,7 @@ class AGoodle(object):
         tmaxx = (bbox[2] - gt.left)/ gt.xsize
         tminy = (bbox[3] - gt.top) / gt.ysize
         tmaxy = (bbox[1] - gt.top) / gt.ysize
-        assert tminx < tmaxx, ("min should be < max!", tmin, tmax)
+        assert tminx < tmaxx, ("min should be < max!", tminx, tmaxx)
         if tminy > tmaxy:
             (tminy, tmaxy) = (tmaxy, tminy)
         # round down for mins, and up for maxs to make sure the
@@ -74,7 +74,7 @@ class AGoodle(object):
         if tmaxx > self.ri.nx: tmaxx = self.ri.nx
         if tmaxy > self.ri.ny: tmaxy = self.ri.ny
         cbbox = [tminx, tminy, tmaxx, tmaxy]
-        assert cbbox[2] > cbbox[0] and cbbox[3] > cbbox[1], ("cbox out of order", cbbox)
+        assert cbbox[2] > cbbox[0] and cbbox[3] > cbbox[1], ("box out of order", cbbox)
 
         new_bbox = [None, None, None, None]
         new_bbox[0] = gt.left + cbbox[0] * gt.xsize

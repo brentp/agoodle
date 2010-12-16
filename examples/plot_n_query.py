@@ -14,6 +14,7 @@ ry = e.top - e.bottom
 # take a subset.
 bbox = (e.left + rx/2.1, e.bottom + ry/2.1,
         e.right - rx/2.1, e.top - ry/2.1)
+assert bbox[2] > bbox[0] and bbox[1] < bbox[3]
 
 a = g.read_array_bbox(bbox)
 assert hasattr(a, 'agoodle')
@@ -29,6 +30,7 @@ assert ix == 0
 ix, iy = a.rw2index(bbox[2], bbox[3])
 assert ix == a.shape[1] - 1, (ix, a.shape[1])
 
+print a.do_stats()
 
 # make some query coordinates.
 xcoords = np.linspace(bbox[0], bbox[2], 5)
