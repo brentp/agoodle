@@ -97,6 +97,14 @@ Development
 please fork, patch, document, contribute.
 
 
+Note
+====
+
+There are some major rounding issues at the edges, so if your query polygon is small compared to the size of the raster, the result will
+not be very accurate. This is something someone could fix with some thinking, I just haven't had the time or inclination.
+For large polygon queries, it won't make a difference.
+
+
 .. _`GDAL`: http://gdal.osgeo.org
 .. _`numpy`: http://numpy.scipy.org
 .. _`matplotlib`: http://matplotlib.sourceforge.net
