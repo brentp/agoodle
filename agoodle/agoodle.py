@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.nxutils as nx
+from matplotlib.path import Path
 from osgeo import gdal
 from osgeo import ogr, osr
 import os.path as op
@@ -203,7 +203,8 @@ class goodlearray(np.ndarray):
         iverts = np.array([self.rw2index(v[0], v[1]) for v in verts])
         ys, xs = np.indices(self.shape)
         xys = np.column_stack((xs.flat, ys.flat))
-        insiders  = nx.points_inside_poly(xys, iverts)
+        path = Path(iverts) 
+        insiders = path.contains_points(xys)        
         outsiders = xys[(insiders == 0)]
 
         if copy:
